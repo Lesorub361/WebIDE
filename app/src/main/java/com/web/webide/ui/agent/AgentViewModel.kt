@@ -3452,6 +3452,7 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(gitCloneRunning = true, gitCloneMessage = str(R.string.vm_connecting_git)) }
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
+                runCatching {
                     val identity = generateQuickChatIdentity(_state.value.projects.mapTo(mutableSetOf()) { it.slug })
                     val baseWorkspacePath = runCatching {
                         com.web.webide.core.utils.WorkspaceManager.getWorkspacePath(getApplication())
@@ -3511,7 +3512,7 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
                             description = repositoryName?.let { "GitHub · $it" } ?: "Imported Git repository",
                             language = metadata.second,
                             slug = identity.slug,
-                            kind = ProjectKind.WEB,
+                            kind = ProjectKind.PROJECT,
                         )
                     } catch (error: Throwable) {
                         workspace.deleteRecursively()
