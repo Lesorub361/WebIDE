@@ -1,0 +1,192 @@
+[versions]
+aboutlibrariesCompose = "13.2.1"
+accompanistNavigationAnimation = "0.36.0"
+agp = "8.13.2"
+bsh = "2.0b6"
+coilCompose = "2.7.0"
+coilSvg = "2.7.0"
+datastoreCore = "1.2.0"
+desugar_jdk_libs = "2.1.5"
+editorVersion = "0.24.4"
+jsoup = "1.22.1"
+kotlin = "2.3.10"
+coreKtx = "1.17.0"
+junit = "4.13.2"
+junitVersion = "1.3.0"
+espressoCore = "3.7.0"
+lifecycleRuntimeKtx = "2.10.0"
+activityCompose = "1.12.4"
+composeBom = "2026.02.01"
+composeIcons = "1.1.1"
+animation = "1.10.4"
+materialIconsExtended = "1.7.8"
+materialKolor = "4.1.1"
+navigationCompose = "2.9.7"
+orgEclipseJgit = "5.13.3.202401111512-r"
+orgEclipseJgitSshApache = "5.13.3.202401111512-r"
+# JGit 5.13.3 传递依赖 Apache MINA SSHD 2.7.0；该版本无 PathUtils.setUserHomeFolderResolver
+#（自 2.10.0 引入，用于在 Android 上重定向 SSH 用户主目录）。显式引入分离构件升级到 2.10.0，
+# 并排除 sshd-osgi fat bundle（其与 core/common 重复）。
+apacheSshd = "2.10.0"
+orgEclipseLsp4j = "0.24.0"
+treeSitterJson = "4.3.2"
+ui = "1.10.4"
+aboutlibraries = "13.2.1"
+appcompat = "1.7.1"
+okhttp = "5.3.2"
+gson = "2.13.2"
+zipalignJava = "1.2.2"
+material = "1.13.0"
+volley = "1.2.1"
+foundation = "1.10.4"
+uiText = "1.10.4"
+runtime = "1.10.4"
+material3 = "1.4.0"
+androidxAnnotation = "1.9.1"
+mavenPublish = "0.36.0"
+coroutines = "1.10.2"
+tsBinding = "4.3.2"
+
+#lsp需要
+# ReTerminal 依赖版本 //🔥🔥🔥补全配置命名 某ReTerminal特有的驼峰规则
+constraintlayout = "2.2.1"
+navigation = "2.9.7"
+utilcode = "1.31.1"
+anrwatchdog = "1.4.0"
+palette = "1.0.0"
+media3 = "1.9.2"
+accompanist = "0.36.0"
+materialIcons = "1.7.8"
+foundationLayout = "1.10.4"
+uiVersion = "1.10.4"
+
+markdownRenderer = "0.39.2"
+highlights = "1.1.0"
+
+[libraries]
+multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "markdownRenderer" }
+multiplatform-markdown-renderer-code = { module = "com.mikepenz:multiplatform-markdown-renderer-code", version.ref = "markdownRenderer" }
+multiplatform-markdown-renderer-coil2 = { module = "com.mikepenz:multiplatform-markdown-renderer-coil2", version.ref = "markdownRenderer" }
+highlights = { module = "dev.snipme:highlights", version.ref = "highlights" }
+aboutlibraries-compose = { module = "com.mikepenz:aboutlibraries-compose", version.ref = "aboutlibrariesCompose" }
+accompanist-navigation-animation = { module = "com.google.accompanist:accompanist-navigation-animation", version.ref = "accompanistNavigationAnimation" }
+compose-icons-simple = { module = "br.com.devsrsouza.compose.icons:simple-icons", version.ref = "composeIcons" }
+compose-icons-font-awesome = { module = "br.com.devsrsouza.compose.icons:font-awesome", version.ref = "composeIcons" }
+androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+#noinspection SimilarGradleDependency
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-datastore-core = { module = "androidx.datastore:datastore-core", version.ref = "datastoreCore" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastoreCore" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
+#noinspection SimilarGradleDependency
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+bsh = { module = "org.apache-extras.beanshell:bsh", version.ref = "bsh" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coilSvg" }
+desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+#noinspection SimilarGradleDependency
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+#noinspection SimilarGradleDependency
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+#noinspection SimilarGradleDependency
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+#noinspection SimilarGradleDependency
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+#noinspection SimilarGradleDependency
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-animation = { group = "androidx.compose.animation", name = "animation", version.ref = "animation" }
+#noinspection SimilarGradleDependency
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
+
+# --- Add these library definitions ---
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+language-textmate = { module = "io.github.rosemoe:language-textmate", version.ref = "editorVersion" }
+material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+lsp4j = { module = "org.eclipse.lsp4j:org.eclipse.lsp4j", version.ref = "orgEclipseLsp4j" }
+org-eclipse-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "orgEclipseJgit" }
+org-eclipse-jgit-ssh-apache = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "orgEclipseJgitSshApache" }
+apache-sshd-common = { group = "org.apache.sshd", name = "sshd-common", version.ref = "apacheSshd" }
+apache-sshd-core = { group = "org.apache.sshd", name = "sshd-core", version.ref = "apacheSshd" }
+# sshd-osgi 是 fat bundle，Android 上排除不用（见 app/build.gradle.kts 的 exclude）
+apache-sshd-sftp = { group = "org.apache.sshd", name = "sshd-sftp", version.ref = "apacheSshd" }
+tree-sitter-json = { module = "com.itsaky.androidide.treesitter:tree-sitter-json", version.ref = "treeSitterJson" }
+zipalign-java = { module = "com.github.iyxan23:zipalign-java", version.ref = "zipalignJava" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
+androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
+
+androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidxAnnotation" }
+androidx-collection = { module = "androidx.collection:collection", version = "1.5.0" }
+#noinspection SimilarGradleDependency
+androidx-test-junit = { module = "androidx.test.ext:junit", version = "1.3.0" }
+#noinspection SimilarGradleDependency
+androidx-test-espresso = { module = "androidx.test.espresso:espresso-core", version = "3.7.0" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+tests-google-truth = { module = "com.google.truth:truth", version = "1.4.5" }
+tests-robolectric = { module = "org.robolectric:robolectric", version = "4.16.1" }
+tree-sitter = { module = "com.itsaky.androidide.treesitter:android-tree-sitter", version.ref = "tsBinding" }
+
+#noinspection SimilarGradleDependency
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+#noinspection SimilarGradleDependency
+lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+# 🟢 修改为 (匹配 libs.core.ktx)
+#noinspection SimilarGradleDependency
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+
+# 导航库
+navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigation" }
+navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigation" }
+navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigation" }
+navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigation" }
+#noinspection SimilarGradleDependency
+navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
+
+# Compose 相关补充
+ui = { group = "androidx.compose.ui", name = "ui" }
+ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+material3 = { group = "androidx.compose.material3", name = "material3" }
+#noinspection SimilarGradleDependency
+activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core", version.ref = "materialIcons" }
+androidx-palette = { group = "androidx.palette", name = "palette", version.ref = "palette" }
+accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
+
+# 工具库
+utilcode = { group = "com.blankj", name = "utilcodex", version.ref = "utilcode" }
+anrwatchdog = { group = "com.github.anrwatchdog", name = "anrwatchdog", version.ref = "anrwatchdog" }
+
+# 核心库简写
+lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleRuntimeKtx" }
+activity = { group = "androidx.activity", name = "activity", version.ref = "activityCompose" }
+androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+#noinspection SimilarGradleDependency
+androidx-compose-ui-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "uiVersion" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+mavenPublish = { id = "com.vanniktech.maven.publish.base", version.ref = "mavenPublish" }

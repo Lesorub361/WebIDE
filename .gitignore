@@ -1,0 +1,25 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# 以下两行原本被写成 UTF-16LE（文件末尾损坏），导致 core 两个模块的 build 目录
+# 实际未被忽略，存在误提交上百 MB 编译产物的风险。此处修正为纯 ASCII。
+core/terminal-emulator/build/
+core/terminal-view/build/
+
+# 构建/工具产物
+.kotlin/
+gradle-build.log
+.workbuddy-ai/
