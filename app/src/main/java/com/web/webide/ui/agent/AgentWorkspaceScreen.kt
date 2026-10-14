@@ -112,11 +112,14 @@ fun AgentWorkspaceScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { navController.navigate("terminal_project") }) {
+                        Icon(Icons.Default.Terminal, contentDescription = "Open CLI Terminal")
+                    }
                     IconButton(onClick = { selectedTab = 1 }) {
                         Icon(Icons.Default.Tune, contentDescription = "AI Setup")
                     }
                     IconButton(onClick = { selectedTab = 2 }) {
-                        Icon(Icons.Default.Terminal, contentDescription = "Ubuntu & Packages")
+                        Icon(Icons.Default.Memory, contentDescription = "Ubuntu & Packages")
                     }
                 }
             )
