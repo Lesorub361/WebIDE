@@ -41,9 +41,6 @@ import com.web.webide.model.*
 import com.web.webide.ui.theme.*
 import kotlinx.coroutines.launch
 
-private val PocketOrange = Color(0xFFF28C52)
-private val PocketGreen = Color(0xFF3DDC84)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AgentWorkspaceScreen(
