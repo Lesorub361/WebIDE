@@ -105,7 +105,10 @@ jobs:
       # -PtargetAbi 让 language-treesitter / core:terminal-emulator 只编当前 flavor 需要的
       # 那一个 ABI（否则每个变体都要编 4 个 ABI 的原生库，是耗时大头）。
       - name: Build ${{ matrix.flavor }} (${{ matrix.build_type }})
-        run: ./gradlew ":app:${{ matrix.task }}" -PtargetAbi=${{ matrix.flavor }} --console=plain --no-daemon 2>&1 | tee gradle-build.log
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew ":app:${{ matrix.task }}" -PtargetAbi=${{ matrix.flavor }} --console=plain --no-daemon 2>&1 | tee gradle-build.log
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
