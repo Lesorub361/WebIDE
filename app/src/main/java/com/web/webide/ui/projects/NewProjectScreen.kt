@@ -96,6 +96,31 @@ fun NewProjectScreen(navController: NavController) {
     var selectedType by remember { mutableStateOf(ProjectType.NORMAL) }
     var createIndexPhp by remember { mutableStateOf(false) }
 
+    val agentViewModel: com.web.webide.ui.agent.AgentViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val agentState by agentViewModel.state.collectAsState()
+    var showGitHubDialog by remember { mutableStateOf(false) }
+
+    if (showGitHubDialog) {
+        com.web.webide.ui.components.GitHubCloneDialog(
+            state = agentState,
+            onStartGitHubLogin = { agentViewModel.startGitHubLogin() },
+            onGenerateNewGitHubCode = { agentViewModel.generateNewGitHubCode() },
+            onRefreshGitHub = { agentViewModel.refreshGitHubRepositories() },
+            onDisconnectGitHub = { agentViewModel.disconnectGitHub() },
+            onCloneGitHub = { repo ->
+                agentViewModel.cloneGitHubRepository(repo)
+                showGitHubDialog = false
+                navController.popBackStack()
+            },
+            onCloneGitUrl = { url ->
+                agentViewModel.clonePublicGitRepository(url)
+                showGitHubDialog = false
+                navController.popBackStack()
+            },
+            onDismiss = { showGitHubDialog = false }
+        )
+    }
+
     // === 2. 可视化配置状态 (全量映射 webapp.json) ===
     var packageName by remember { mutableStateOf("com.example.myapp") }
     var versionName by remember { mutableStateOf("1.0.0") }
@@ -378,7 +403,49 @@ fun NewProjectScreen(navController: NavController) {
                     MinimalTypeCard("Python", Icons.Default.Terminal, selectedType == ProjectType.PYTHON, Modifier.weight(1f)) { selectedType = ProjectType.PYTHON }
                     MinimalTypeCard("Android", Icons.Default.Build, selectedType == ProjectType.ANDROID, Modifier.weight(1f)) { selectedType = ProjectType.ANDROID }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showGitHubDialog = true },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.CloudDownload,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Импорт из GitHub / Git",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = "Клонировать репозиторий через GitHub или по ссылке",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
+                        Icon(
+                            Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // 基础项目名
                 CleanTextField(

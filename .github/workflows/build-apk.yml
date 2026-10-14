@@ -51,14 +51,14 @@ jobs:
       - id: set
         shell: bash
         run: |
-          FULL='{"include":[{"flavor":"arm64-v8a","build_type":"debug","task":"assembleArm64-v8aDebug"},{"flavor":"arm64-v8a","build_type":"release","task":"assembleArm64-v8aRelease"},{"flavor":"armeabi-v7a","build_type":"debug","task":"assembleArmeabi-v7aDebug"},{"flavor":"armeabi-v7a","build_type":"release","task":"assembleArmeabi-v7aRelease"}]}'
-          QUICK='{"include":[{"flavor":"arm64-v8a","build_type":"debug","task":"assembleArm64-v8aDebug"}]}'
+          FULL='{"include":[{"flavor":"arm64-v8a","build_type":"release","task":"assembleArm64-v8aRelease"},{"flavor":"arm64-v8a","build_type":"debug","task":"assembleArm64-v8aDebug"},{"flavor":"armeabi-v7a","build_type":"release","task":"assembleArmeabi-v7aRelease"},{"flavor":"armeabi-v7a","build_type":"debug","task":"assembleArmeabi-v7aDebug"}]}'
+          QUICK='{"include":[{"flavor":"arm64-v8a","build_type":"release","task":"assembleArm64-v8aRelease"}]}'
           if [[ "$GITHUB_REF" == refs/tags/* || "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
             echo "matrix=$FULL" >> "$GITHUB_OUTPUT"
             echo "构建 4 个变体（debug/release × arm64-v8a/armeabi-v7a）"
           else
             echo "matrix=$QUICK" >> "$GITHUB_OUTPUT"
-            echo "仅构建 arm64-v8a / debug（发版 tag 才会全量）"
+            echo "构建 arm64-v8a / release"
           fi
 
   build:

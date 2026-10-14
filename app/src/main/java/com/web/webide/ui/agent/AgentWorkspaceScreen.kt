@@ -72,6 +72,27 @@ fun AgentWorkspaceScreen(
         }
     }
 
+    var showGitHubDialog by rememberSaveable { mutableStateOf(false) }
+
+    if (showGitHubDialog) {
+        com.web.webide.ui.components.GitHubCloneDialog(
+            state = state,
+            onStartGitHubLogin = { agentViewModel.startGitHubLogin() },
+            onGenerateNewGitHubCode = { agentViewModel.generateNewGitHubCode() },
+            onRefreshGitHub = { agentViewModel.refreshGitHubRepositories() },
+            onDisconnectGitHub = { agentViewModel.disconnectGitHub() },
+            onCloneGitHub = { repo ->
+                agentViewModel.cloneGitHubRepository(repo)
+                showGitHubDialog = false
+            },
+            onCloneGitUrl = { url ->
+                agentViewModel.clonePublicGitRepository(url)
+                showGitHubDialog = false
+            },
+            onDismiss = { showGitHubDialog = false }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -112,6 +133,14 @@ fun AgentWorkspaceScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = {
+                        showGitHubDialog = true
+                        if (state.githubAuthStatus == com.web.webide.ui.agent.GitHubAuthStatus.CONNECTED && state.githubRepositories.isEmpty()) {
+                            agentViewModel.refreshGitHubRepositories()
+                        }
+                    }) {
+                        Icon(Icons.Default.CloudDownload, contentDescription = "GitHub Repositories")
+                    }
                     IconButton(onClick = { navController.navigate("terminal_project") }) {
                         Icon(Icons.Default.Terminal, contentDescription = "Open CLI Terminal")
                     }
@@ -190,7 +219,13 @@ fun AgentWorkspaceScreen(
                     onSelectAgent = { agent -> agentViewModel.selectAgent(agent) },
                     onInstallAgent = { agent -> agentViewModel.installAgent(agent) },
                     onCheckAgentUpdates = { agentViewModel.checkForAgentUpdates() },
-                    onUpdateAgent = { agent -> agentViewModel.updateAgent(agent) }
+                    onUpdateAgent = { agent -> agentViewModel.updateAgent(agent) },
+                    onStartAntigravityLogin = { agentViewModel.startAntigravityLogin() },
+                    onSubmitAntigravityCode = { agentViewModel.submitAntigravityCode(it) },
+                    onLogoutAntigravity = { agentViewModel.logoutAntigravity() },
+                    onRefreshAntigravityModels = { agentViewModel.refreshAntigravityModels() },
+                    onSetAntigravityModel = { agentViewModel.setAntigravityModel(it) },
+                    onSetAntigravityEffort = { agentViewModel.setAntigravityEffort(it) }
                 )
                 2 -> UbuntuSubsystemTab(
                     state = state,

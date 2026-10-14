@@ -66,7 +66,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import androidx.core.content.edit
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.web.webide.safeNavigate
+import com.web.webide.ui.agent.AgentViewModel
+import com.web.webide.ui.components.GitHubCloneDialog
 
 // --- 常量定义 ---
 private const val PREFS_NAME = "project_prefs"
@@ -115,6 +118,34 @@ fun ProjectListScreen(navController: NavController) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
     var projectToDelete by remember { mutableStateOf<String?>(null) }
+
+    val agentViewModel: AgentViewModel = viewModel()
+    val agentState by agentViewModel.state.collectAsState()
+    var showGitHubDialog by remember { mutableStateOf(false) }
+
+    if (showGitHubDialog) {
+        GitHubCloneDialog(
+            state = agentState,
+            onStartGitHubLogin = { agentViewModel.startGitHubLogin() },
+            onGenerateNewGitHubCode = { agentViewModel.generateNewGitHubCode() },
+            onRefreshGitHub = { agentViewModel.refreshGitHubRepositories() },
+            onDisconnectGitHub = { agentViewModel.disconnectGitHub() },
+            onCloneGitHub = { repo ->
+                agentViewModel.cloneGitHubRepository(repo)
+                showGitHubDialog = false
+                refreshList()
+            },
+            onCloneGitUrl = { url ->
+                agentViewModel.clonePublicGitRepository(url)
+                showGitHubDialog = false
+                refreshList()
+            },
+            onDismiss = {
+                showGitHubDialog = false
+                refreshList()
+            }
+        )
+    }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val snackbarHostState = remember { SnackbarHostState() }
@@ -341,6 +372,15 @@ fun ProjectListScreen(navController: NavController) {
                                         )
                                     }
                                 }
+                            }
+                            // GitHub Репозитории / Клонирование
+                            IconButton(onClick = {
+                                showGitHubDialog = true
+                                if (agentState.githubAuthStatus == com.web.webide.ui.agent.GitHubAuthStatus.CONNECTED && agentState.githubRepositories.isEmpty()) {
+                                    agentViewModel.refreshGitHubRepositories()
+                                }
+                            }) {
+                                Icon(Icons.Default.CloudDownload, "GitHub / Git Clone")
                             }
                             // AI Agent 入口
                             IconButton(onClick = { navController.safeNavigate("agent") }) {

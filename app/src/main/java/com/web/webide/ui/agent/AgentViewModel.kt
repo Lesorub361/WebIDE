@@ -3418,10 +3418,23 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(gitCloneRunning = true, gitCloneMessage = str(R.string.vm_connecting_git)) }
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                runCatching {
                     val identity = generateQuickChatIdentity(_state.value.projects.mapTo(mutableSetOf()) { it.slug })
-                    val projectId = UUID.randomUUID().toString()
-                    val workspace = File(getApplication<Application>().filesDir, "workspaces/$projectId").apply { mkdirs() }
+                    val baseWorkspacePath = runCatching {
+                        com.web.webide.core.utils.WorkspaceManager.getWorkspacePath(getApplication())
+                    }.getOrDefault(getApplication<Application>().filesDir.absolutePath)
+                    val rawRepoName = repositoryName?.substringAfterLast('/')?.takeIf(String::isNotBlank)
+                        ?: normalized.substringAfterLast('/').removeSuffix(".git").takeIf(String::isNotBlank)
+                        ?: identity.displayName
+                    val safeDirName = rawRepoName.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+                    val parentDir = File(baseWorkspacePath).apply { mkdirs() }
+                    var candidate = File(parentDir, safeDirName)
+                    var suffix = 1
+                    while (candidate.exists()) {
+                        candidate = File(parentDir, "${safeDirName}_$suffix")
+                        suffix++
+                    }
+                    val workspace = candidate.apply { mkdirs() }
+                    val projectId = workspace.absolutePath
                     val output = File(getApplication<Application>().cacheDir, "git-clone-${System.nanoTime()}.log")
                     try {
                         val environment = mutableMapOf(
@@ -3451,7 +3464,7 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
                             workspace,
                             environment,
                             command,
-                            guestWorkspacePath = "/workspace/${identity.slug}",
+                            guestWorkspacePath = "/workspace/${workspace.name}",
                             outputFile = output,
                         )
                         val exit = process.waitFor()
@@ -3460,11 +3473,11 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
                         val metadata = detectImportedProjectMetadata(workspace)
                         Project(
                             id = projectId,
-                            name = identity.displayName,
+                            name = workspace.name,
                             description = repositoryName?.let { "GitHub · $it" } ?: "Imported Git repository",
                             language = metadata.second,
                             slug = identity.slug,
-                            kind = ProjectKind.QUICK_PROJECT,
+                            kind = ProjectKind.WEB,
                         )
                     } catch (error: Throwable) {
                         workspace.deleteRecursively()
