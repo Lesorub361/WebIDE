@@ -50,6 +50,7 @@
     <string name="action_dark">深色</string>
     <string name="language_chinese">中文</string>
     <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
 
     <string name="label_file">文件</string>
     <string name="label_folder">文件夹</string>

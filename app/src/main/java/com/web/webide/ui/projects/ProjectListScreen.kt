@@ -342,6 +342,10 @@ fun ProjectListScreen(navController: NavController) {
                                     }
                                 }
                             }
+                            // AI Agent 入口
+                            IconButton(onClick = { navController.safeNavigate("agent") }) {
+                                Icon(Icons.Default.AutoAwesome, "AI Agent")
+                            }
                             // 终端入口：从主界面直接打开终端
                             IconButton(onClick = { navController.safeNavigate("terminal") }) {
                                 Icon(Icons.Default.Terminal, stringResource(R.string.action_terminal))

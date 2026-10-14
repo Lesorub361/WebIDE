@@ -31,8 +31,9 @@ import java.util.Locale
 
 enum class AppLanguageOption(@field:StringRes val labelRes: Int, val languageTag: String) {
     SYSTEM(R.string.action_follow_system, ""),
-    CHINESE(R.string.language_chinese, "zh"),
-    ENGLISH(R.string.language_english, "en");
+    RUSSIAN(R.string.language_russian, "ru"),
+    ENGLISH(R.string.language_english, "en"),
+    CHINESE(R.string.language_chinese, "zh");
 
     companion object {
         fun fromLanguageTag(languageTag: String?): AppLanguageOption {

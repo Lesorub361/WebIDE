@@ -27,27 +27,46 @@ if [ "$#" -gt 0 ]; then
     exec "$@"
 fi
 
-# 欢迎语直接输出，不改写与 LSP 共用的 /etc 文件。
+# 欢迎语输出
+if [ -x /usr/bin/apt ]; then
+cat <<'EOF'
+  _       __     __    ________  ______ 
+ | |     / /__  / /_  /  _/ __ \/ ____/ 
+ | | /| / / _ \/ __ \ / // / / / __/    
+ | |/ |/ /  __/ /_/ // // /_/ / /___    
+ |__/|__/\___/_.___/___/_____/_____/    
+ 
+ Welcome to WebIDE Ubuntu 20.04 LTS Subsystem (PRoot)
+ 
+ Package Management:
+   - apt update && apt install <pkg>
+   - npm install -g <package>
+   - pip install <module>
+
+ AI Coding Agents:
+   - Claude Code: claude
+   - Antigravity: agy
+   - DeepSeek Harness: dsh
+EOF
+else
 cat <<'EOF'
 Welcome to WebIDE Terminal!
-
-The Alpine Wiki contains a large amount of how-to guides and general
-information about administrating Alpine systems.
-See <https://wiki.alpinelinux.org/>.
-
 Installing : apk add <pkg>
-Updating : apk update && apk upgrade
+Updating   : apk update && apk upgrade
 EOF
+fi
 
-# 保留终端原有的默认目录。优先 Bash，兼容只有 BusyBox 的旧 rootfs。
-# 不在打开会话时安装/升级软件，也不依赖 Node.js 能否运行。
 cd / || exit 1
-if [ -x /bin/bash ]; then
+if [ -x /usr/bin/bash ]; then
+    export SHELL=/usr/bin/bash
+    export PS1='\[\033[01;32m\]root@ubuntu\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+    exec /usr/bin/bash -i
+elif [ -x /bin/bash ]; then
     export SHELL=/bin/bash
-    export PS1='\u@localhost:\w\$ '
+    export PS1='root@localhost:\w\$ '
     exec /bin/bash -i
 else
     export SHELL=/bin/ash
-    export PS1='\u@localhost:\w\$ '
+    export PS1='root@localhost:\w\$ '
     exec /bin/ash -i
 fi

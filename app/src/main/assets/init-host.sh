@@ -15,12 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+UBUNTU_DIR="$PREFIX/files/runtime/ubuntu"
 ALPINE_DIR="$PREFIX/local/alpine"
 
-# SetupWorker owns installation. Opening a terminal must not extract over the
-# shared Node.js/LSP rootfs or replace a library used by another proot process.
-if [ ! -f "$ALPINE_DIR/bin/busybox" ]; then
-    echo "Alpine environment is not ready. Return and try again." >&2
+if [ -f "$UBUNTU_DIR/usr/bin/bash" ]; then
+    TARGET_ROOTFS="$UBUNTU_DIR"
+elif [ -f "$ALPINE_DIR/bin/busybox" ]; then
+    TARGET_ROOTFS="$ALPINE_DIR"
+else
+    echo "Linux subsystem is not installed. Go to AI Agent -> Ubuntu / Packages tab to install Ubuntu 20.04 LTS." >&2
     exit 1
 fi
 
@@ -76,7 +79,7 @@ if [ ! -d "$PREFIX/local/alpine/tmp" ]; then
 fi
 ARGS="$ARGS -b $PREFIX/local/alpine/tmp:/dev/shm"
 
-ARGS="$ARGS -r $PREFIX/local/alpine"
+ARGS="$ARGS -r $TARGET_ROOTFS"
 ARGS="$ARGS -0"
 ARGS="$ARGS --link2symlink"
 ARGS="$ARGS --sysvipc"

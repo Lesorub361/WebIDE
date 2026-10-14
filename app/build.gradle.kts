@@ -42,6 +42,10 @@ android {
         // 编译时间戳：每次构建时写入当前毫秒时间，供“关于”页展示构建时间。
         // 用 Long 类型避免地区化问题，UI 端再格式化为本地时间字符串。
         buildConfigField("long", "BUILD_TIME", "${System.currentTimeMillis()}L")
+        buildConfigField("boolean", "OFFLINE_RUNTIME_BUNDLES", "false")
+        buildConfigField("String", "RUNTIME_RELEASE_BASE_URL", "\"https://github.com/techjarves/Mobile-Harness/releases/download/runtime-2026.09.4\"")
+        buildConfigField("String", "TEST_OPENROUTER_API_KEY", "\"\"")
+        buildConfigField("boolean", "IS_PLAY_BUILD", "false")
     }
     // 按架构分离：每个 flavor 的 APK 只含对应架构的 rootfs（48MB），而非两个都打包（96MB）
     flavorDimensions += "arch"
@@ -281,8 +285,13 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.compose.runtime)
-    implementation(libs.androidx.compose.material3)
     implementation(libs.appcompat)
+    // Ubuntu Subsystem & Compression
+    implementation("org.apache.commons:commons-compress:1.27.1")
+    implementation("com.github.luben:zstd-jni:1.5.7-12@aar")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

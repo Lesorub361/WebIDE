@@ -95,8 +95,10 @@ object AlpineManager {
 
         args.add("-b")
         args.add(context.filesDir.absolutePath)
+        val ubuntuDir = File(context.filesDir, "runtime/ubuntu")
+        val targetRootfs = if (ubuntuDir.isDirectory && File(ubuntuDir, "usr/bin/bash").exists()) ubuntuDir else alpineDir
         args.add("-r")
-        args.add(alpineDir.absolutePath)
+        args.add(targetRootfs.absolutePath)
 
         args.add("-w")
         args.add("/root")

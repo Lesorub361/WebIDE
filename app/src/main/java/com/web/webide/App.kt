@@ -49,6 +49,7 @@ import kotlinx.coroutines.launch
 
 import com.web.webide.ui.welcome.WelcomeScreen
 import com.web.webide.ui.editor.doc.JsInterfaceDocScreen
+import com.web.webide.ui.agent.AgentWorkspaceScreen
 
 @Composable
 fun App(
@@ -222,6 +223,20 @@ fun App(
                 themeViewModel = themeViewModel,
                 followProjectPath = true
             )
+        }
+        composable("agent") {
+            AgentWorkspaceScreen(navController = navController)
+        }
+        composable(
+            route = "agent_project/{folderName}",
+            arguments = listOf(navArgument("folderName") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val folderName = backStackEntry.arguments?.getString("folderName")
+            val projectPath = if (folderName != null) {
+                val ws = WorkspaceManager.getWorkspacePath(context)
+                java.io.File(ws, folderName).absolutePath
+            } else null
+            AgentWorkspaceScreen(navController = navController, projectPath = projectPath)
         }
     }
 }

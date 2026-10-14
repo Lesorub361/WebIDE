@@ -541,6 +541,13 @@ fun CodeEditScreen(folderName: String, navController: NavController, viewModel: 
                                             }
                                         )
                                         DropdownMenuItem(
+                                            text = { Text("ИИ Агент (Claude / Antigravity)") },
+                                            onClick = {
+                                                isMoreMenuExpanded = false
+                                                navController.navigate("agent_project/$folderName")
+                                            }
+                                        )
+                                        DropdownMenuItem(
                                             text = { Text(jsDocsText) },
                                             onClick = {
                                                 isMoreMenuExpanded = false

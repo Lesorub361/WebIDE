@@ -77,7 +77,7 @@ import androidx.core.graphics.toColorInt
 import com.web.webide.R
 
 // --- 数据结构 ---
-enum class ProjectType { NORMAL, WEBAPP, WEBSITE }
+enum class ProjectType { NORMAL, WEBAPP, WEBSITE, NODE, PYTHON, ANDROID }
 
 data class SigningConfig(
     val enabled: Boolean,
@@ -371,6 +371,12 @@ fun NewProjectScreen(navController: NavController) {
                     MinimalTypeCard(stringResource(R.string.new_project_type_web), Icons.Default.Html, selectedType == ProjectType.NORMAL, Modifier.weight(1f)) { selectedType = ProjectType.NORMAL }
                     MinimalTypeCard(stringResource(R.string.new_project_type_webapp), Icons.Default.Android, selectedType == ProjectType.WEBAPP, Modifier.weight(1f)) { selectedType = ProjectType.WEBAPP }
                     MinimalTypeCard(stringResource(R.string.new_project_type_wrapper), Icons.Default.Link, selectedType == ProjectType.WEBSITE, Modifier.weight(1f)) { selectedType = ProjectType.WEBSITE }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    MinimalTypeCard("Node.js", Icons.Default.Code, selectedType == ProjectType.NODE, Modifier.weight(1f)) { selectedType = ProjectType.NODE }
+                    MinimalTypeCard("Python", Icons.Default.Terminal, selectedType == ProjectType.PYTHON, Modifier.weight(1f)) { selectedType = ProjectType.PYTHON }
+                    MinimalTypeCard("Android", Icons.Default.Build, selectedType == ProjectType.ANDROID, Modifier.weight(1f)) { selectedType = ProjectType.ANDROID }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -804,13 +810,44 @@ private fun createNewProject(
                 ProjectType.NORMAL -> createNormalStructure(projectDir, createIndexPhp)
                 ProjectType.WEBAPP -> createWebAppStructure(projectDir, finalJsonContent)
                 ProjectType.WEBSITE -> createWebsiteStructure(projectDir, url, finalJsonContent)
+                ProjectType.NODE -> createNodeStructure(projectDir)
+                ProjectType.PYTHON -> createPythonStructure(projectDir)
+                ProjectType.ANDROID -> createAndroidStructure(projectDir, name)
             }
+
+            // Ensure gitignore & readme exist
+            val gitignore = File(projectDir, ".gitignore")
+            if (!gitignore.exists()) safeWrite(gitignore, ProjectTemplates.gitignore)
+            val readme = File(projectDir, "README.md")
+            if (!readme.exists()) safeWrite(readme, "# $name\n\nProject created in WebIDE.\n")
 
             withContext(Dispatchers.Main) { onSuccess(projectDir) }
         } catch (e: Exception) {
             e.printStackTrace()
             withContext(Dispatchers.Main) { onError(e.message ?: context.getString(R.string.new_project_unknown_error)) }
         }
+    }
+}
+
+private fun createNodeStructure(dir: File) {
+    safeWrite(File(dir, "package.json"), ProjectTemplates.nodePackageJson)
+    safeWrite(File(dir, "index.js"), ProjectTemplates.nodeIndexJs)
+}
+
+private fun createPythonStructure(dir: File) {
+    safeWrite(File(dir, "main.py"), ProjectTemplates.pythonMainPy)
+    safeWrite(File(dir, "requirements.txt"), "")
+}
+
+private fun createAndroidStructure(dir: File, name: String) {
+    try {
+        com.web.webide.runtime.AndroidProjectTemplateGenerator.generate(
+            dir,
+            name,
+            com.web.webide.model.AndroidTemplate.COMPOSE
+        )
+    } catch (_: Exception) {
+        createNormalStructure(dir, false)
     }
 }
 

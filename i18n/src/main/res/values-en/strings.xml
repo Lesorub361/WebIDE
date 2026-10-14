@@ -33,6 +33,7 @@
     <string name="action_dark">Dark</string>
     <string name="language_chinese">Chinese</string>
     <string name="language_english">English</string>
+    <string name="language_russian">Russian</string>
 
     <string name="label_file">File</string>
     <string name="label_folder">Folder</string>

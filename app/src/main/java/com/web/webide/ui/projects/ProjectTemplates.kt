@@ -144,4 +144,55 @@ function testToast() {
 }
     """.trimIndent()
 
+    val nodePackageJson = """
+{
+  "name": "myapp",
+  "version": "1.0.0",
+  "description": "Node.js application in WebIDE",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {}
+}
+    """.trimIndent()
+
+    val nodeIndexJs = """
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end('<h1>Hello from Node.js server in WebIDE!</h1><p>Running on Ubuntu PRoot.</p>');
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}/`);
+});
+    """.trimIndent()
+
+    val pythonMainPy = """
+def main():
+    print("Hello from Python in WebIDE!")
+    print("Running inside Ubuntu 20.04 LTS PRoot environment.")
+
+if __name__ == "__main__":
+    main()
+    """.trimIndent()
+
+    val gitignore = """
+node_modules/
+__pycache__/
+*.pyc
+.env
+dist/
+build/
+.DS_Store
+    """.trimIndent()
+
+    val readmeMd = """
+# Project
+
+Created with WebIDE & Mobile-Harness Ubuntu PRoot subsystem.
+    """.trimIndent()
 }

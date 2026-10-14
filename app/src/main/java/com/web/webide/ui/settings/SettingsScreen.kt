@@ -253,6 +253,15 @@ fun SettingsScreen(
 
             item {
                 SimpleSettingsCard(
+                    icon = Icons.Outlined.AutoAwesome,
+                    title = "ИИ Агенты и Провайдеры",
+                    subtitle = "Claude Code, Antigravity CLI, DeepSeek, OpenRouter и ключи API",
+                    onClick = { navController.safeNavigate("agent") }
+                )
+            }
+
+            item {
+                SimpleSettingsCard(
                     icon = Icons.Outlined.WavingHand,
                     title = stringResource(R.string.settings_welcome_title),
                     subtitle = stringResource(R.string.settings_welcome_subtitle),
