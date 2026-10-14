@@ -123,29 +123,6 @@ fun ProjectListScreen(navController: NavController) {
     val agentState by agentViewModel.state.collectAsState()
     var showGitHubDialog by remember { mutableStateOf(false) }
 
-    if (showGitHubDialog) {
-        GitHubCloneDialog(
-            state = agentState,
-            onStartGitHubLogin = { agentViewModel.startGitHubLogin() },
-            onGenerateNewGitHubCode = { agentViewModel.generateNewGitHubCode() },
-            onRefreshGitHub = { agentViewModel.refreshGitHubRepositories() },
-            onDisconnectGitHub = { agentViewModel.disconnectGitHub() },
-            onCloneGitHub = { repo ->
-                agentViewModel.cloneGitHubRepository(repo)
-                showGitHubDialog = false
-                refreshList()
-            },
-            onCloneGitUrl = { url ->
-                agentViewModel.clonePublicGitRepository(url)
-                showGitHubDialog = false
-                refreshList()
-            },
-            onDismiss = {
-                showGitHubDialog = false
-                refreshList()
-            }
-        )
-    }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val snackbarHostState = remember { SnackbarHostState() }
@@ -228,6 +205,30 @@ fun ProjectListScreen(navController: NavController) {
                 withContext(Dispatchers.Main) { projectList = emptyList() }
             }
         }
+    }
+
+    if (showGitHubDialog) {
+        GitHubCloneDialog(
+            state = agentState,
+            onStartGitHubLogin = { agentViewModel.startGitHubLogin() },
+            onGenerateNewGitHubCode = { agentViewModel.generateNewGitHubCode() },
+            onRefreshGitHub = { agentViewModel.refreshGitHubRepositories() },
+            onDisconnectGitHub = { agentViewModel.disconnectGitHub() },
+            onCloneGitHub = { repo ->
+                agentViewModel.cloneGitHubRepository(repo)
+                showGitHubDialog = false
+                refreshList()
+            },
+            onCloneGitUrl = { url ->
+                agentViewModel.clonePublicGitRepository(url)
+                showGitHubDialog = false
+                refreshList()
+            },
+            onDismiss = {
+                showGitHubDialog = false
+                refreshList()
+            }
+        )
     }
 
     // --- 操作逻辑 ---

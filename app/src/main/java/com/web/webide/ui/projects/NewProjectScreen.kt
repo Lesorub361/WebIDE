@@ -182,6 +182,7 @@ fun NewProjectScreen(navController: NavController) {
                 ProjectType.WEBSITE -> targetUrl
                 ProjectType.WEBAPP -> targetUrl.ifBlank { "index.html" }
                 ProjectType.NORMAL -> "index.html"
+                else -> "index.html"
             }
             root.put("targetUrl", finalUrl)
 

@@ -404,6 +404,40 @@ data class AppUiState(
 )
 
 class AgentViewModel(application: Application) : AndroidViewModel(application) {
+    companion object {
+        /** A long-running agent can poll a managed command hundreds of times. Keep the chat
+         * responsive by retaining the latest useful steps instead of composing an unbounded list. */
+        const val MAX_VISIBLE_WORK_ITEMS = 32
+        val DEFERRED_FOLDER_METADATA_NAMES = setOf(".git", ".gradle", "build", "node_modules")
+        const val MAX_ACTIVITY_DETAIL_CHARS = 8_000
+        const val NOISY_ITEM_SCAN_CHARS = 320
+        const val TRANSCRIPT_WRITE_DEBOUNCE_MS = 500L
+        const val DIAGNOSTICS_REFRESH_COOLDOWN_MS = 1_000L
+        const val RECENT_EXIT_CACHE_MS = 60_000L
+        const val MINIMUM_INITIALIZATION_SCREEN_MS = 3_000L
+        const val MAX_EDITABLE_FILE_BYTES = 512_000L
+        const val MAX_PROJECT_TERMINAL_HISTORY = 100
+        const val MAX_PROJECT_TERMINAL_OUTPUT = 200_000
+        const val MAX_ANDROID_BUILD_LOG = 300_000
+        const val MAX_LOGCAT_LINES = 5_000
+        const val MEMORY_PRESSURE_TERMINAL_LINES = 20
+        const val MEMORY_PRESSURE_LOGCAT_LINES = 500
+        const val MEMORY_PRESSURE_TEXT_CHARS = 64 * 1024
+        const val LOGCAT_GRANT_COMMAND = "adb shell pm grant com.jarves.mh android.permission.READ_LOGS"
+        const val MAX_ATTACHMENTS_PER_MESSAGE = 5
+        const val MAX_PROCESS_OUTPUT_BYTES = 512 * 1024
+        const val MAX_ATTACHMENT_BYTES = 25L * 1024L * 1024L
+        const val MAX_UPLOAD_BYTES = 100L * 1024L * 1024L
+        const val MAX_IMPORTED_PROJECT_BYTES = 8L * 1024L * 1024L * 1024L
+        const val MAX_IMPORTED_ZIP_ENTRIES = 100_000
+        const val LEGACY_GITHUB_TOKEN_KEY = "GITHUB_APP"
+        const val GITHUB_DEVICE_URL = "https://github.com/login/device"
+        val GITHUB_DEVICE_CODE = Regex("\\b[A-Z0-9]{4}-[A-Z0-9]{4}\\b")
+        const val TEST_PROVIDER_DEFAULTS_VERSION = 1
+        const val TEST_OPENROUTER_BASE_URL = "https://openrouter.ai/api"
+        const val TEST_OPENROUTER_MODEL = "stealth/ox-alpha"
+    }
+
     /** Resolves a user-visible string in the language selected in the app. */
     private fun str(@StringRes id: Int, vararg args: Any): String = AppStrings.get(getApplication(), id, *args)
 
@@ -5375,39 +5409,5 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         stopAndroidLogcat()
         super.onCleared()
-    }
-
-    companion object {
-        /** A long-running agent can poll a managed command hundreds of times. Keep the chat
-         * responsive by retaining the latest useful steps instead of composing an unbounded list. */
-        private const val MAX_VISIBLE_WORK_ITEMS = 32
-        private val DEFERRED_FOLDER_METADATA_NAMES = setOf(".git", ".gradle", "build", "node_modules")
-        private const val MAX_ACTIVITY_DETAIL_CHARS = 8_000
-        private const val NOISY_ITEM_SCAN_CHARS = 320
-        private const val TRANSCRIPT_WRITE_DEBOUNCE_MS = 500L
-        private const val DIAGNOSTICS_REFRESH_COOLDOWN_MS = 1_000L
-        private const val RECENT_EXIT_CACHE_MS = 60_000L
-        private const val MINIMUM_INITIALIZATION_SCREEN_MS = 3_000L
-        private const val MAX_EDITABLE_FILE_BYTES = 512_000L
-        private const val MAX_PROJECT_TERMINAL_HISTORY = 100
-        private const val MAX_PROJECT_TERMINAL_OUTPUT = 200_000
-        private const val MAX_ANDROID_BUILD_LOG = 300_000
-        private const val MAX_LOGCAT_LINES = 5_000
-        private const val MEMORY_PRESSURE_TERMINAL_LINES = 20
-        private const val MEMORY_PRESSURE_LOGCAT_LINES = 500
-        private const val MEMORY_PRESSURE_TEXT_CHARS = 64 * 1024
-        const val LOGCAT_GRANT_COMMAND = "adb shell pm grant com.jarves.mh android.permission.READ_LOGS"
-        private const val MAX_ATTACHMENTS_PER_MESSAGE = 5
-        private const val MAX_PROCESS_OUTPUT_BYTES = 512 * 1024
-        private const val MAX_ATTACHMENT_BYTES = 25L * 1024L * 1024L
-        private const val MAX_UPLOAD_BYTES = 100L * 1024L * 1024L
-        private const val MAX_IMPORTED_PROJECT_BYTES = 8L * 1024L * 1024L * 1024L
-        private const val MAX_IMPORTED_ZIP_ENTRIES = 100_000
-        private const val LEGACY_GITHUB_TOKEN_KEY = "GITHUB_APP"
-        private const val GITHUB_DEVICE_URL = "https://github.com/login/device"
-        private val GITHUB_DEVICE_CODE = Regex("\\b[A-Z0-9]{4}-[A-Z0-9]{4}\\b")
-        private const val TEST_PROVIDER_DEFAULTS_VERSION = 1
-        private const val TEST_OPENROUTER_BASE_URL = "https://openrouter.ai/api"
-        private const val TEST_OPENROUTER_MODEL = "stealth/ox-alpha"
     }
 }

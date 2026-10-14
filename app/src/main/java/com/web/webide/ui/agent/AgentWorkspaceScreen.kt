@@ -54,6 +54,10 @@ fun AgentWorkspaceScreen(
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val chatListState = rememberLazyListState()
 
+    val isRuntimeReady = state.startupStage == StartupStage.READY ||
+        state.startupStage == StartupStage.MODEL_SETUP ||
+        state.onboardingComplete
+
     LaunchedEffect(projectPath) {
         if (!projectPath.isNullOrBlank()) {
             val name = java.io.File(projectPath).name
@@ -61,9 +65,11 @@ fun AgentWorkspaceScreen(
                 Project(
                     id = projectPath,
                     name = name,
-                    path = projectPath,
-                    kind = ProjectKind.WEB,
-                    createdAt = System.currentTimeMillis()
+                    description = "",
+                    language = "",
+                    rootPath = projectPath,
+                    kind = ProjectKind.PROJECT,
+                    updatedAtMillis = System.currentTimeMillis()
                 )
             )
         }
@@ -109,7 +115,7 @@ fun AgentWorkspaceScreen(
                                 modifier = Modifier.padding(2.dp)
                             ) {
                                 Text(
-                                    text = state.selectedAgent.name,
+                                    text = state.agentKind.localizedTitle(context),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = if (state.isRunning) PocketOrange else MaterialTheme.colorScheme.onPrimaryContainer,
@@ -118,9 +124,9 @@ fun AgentWorkspaceScreen(
                             }
                         }
                         Text(
-                            text = if (state.runtimeInstalled) "Ubuntu 20.04 LTS Subsystem Ready" else "Ubuntu Subsystem Setup Needed",
+                            text = if (isRuntimeReady) "Ubuntu 20.04 LTS Subsystem Ready" else "Ubuntu Subsystem Setup Needed",
                             fontSize = 11.sp,
-                            color = if (state.runtimeInstalled) PocketGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (isRuntimeReady) PocketGreen else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
@@ -188,10 +194,11 @@ fun AgentWorkspaceScreen(
                 0 -> AgentChatTab(
                     state = state,
                     listState = chatListState,
+                    isRuntimeReady = isRuntimeReady,
                     onSend = { prompt ->
-                        agentViewModel.sendMessage(prompt)
+                        agentViewModel.sendPrompt(prompt)
                     },
-                    onStop = { agentViewModel.stopRunningTask() },
+                    onStop = { agentViewModel.stopTask() },
                     onRunInTerminal = { cmd ->
                         navController.navigate("terminal")
                     }
@@ -199,7 +206,7 @@ fun AgentWorkspaceScreen(
                 1 -> AgentScreen(
                     state = state,
                     onSaveProvider = { profile, key ->
-                        agentViewModel.saveProviderProfile(profile, key)
+                        agentViewModel.updateProvider(profile, key)
                     },
                     onDiscoverModels = { profile, key ->
                         agentViewModel.discoverModels(profile, key)
@@ -207,15 +214,15 @@ fun AgentWorkspaceScreen(
                     onValidateProvider = { profile, key, models ->
                         agentViewModel.validateProvider(profile, key, models)
                     },
-                    onPing = { agentViewModel.pingProvider() },
-                    getSavedApiKey = { kind -> agentViewModel.getApiKey(kind) },
-                    getSavedApiKeys = { kind -> agentViewModel.getApiKeys(kind) },
+                    onPing = { agentViewModel.pingApi() },
+                    getSavedApiKey = { kind -> agentViewModel.getSavedApiKey(kind) },
+                    getSavedApiKeys = { kind -> agentViewModel.getSavedApiKeys(kind) },
                     onAddApiKey = { kind, label, key -> agentViewModel.addApiKey(kind, label, key) },
                     onActivateApiKey = { kind, id -> agentViewModel.activateApiKey(kind, id) },
                     onRemoveApiKey = { kind, id -> agentViewModel.removeApiKey(kind, id) },
                     onSelectAgent = { agent -> agentViewModel.selectAgent(agent) },
                     onInstallAgent = { agent -> agentViewModel.installAgent(agent) },
-                    onCheckAgentUpdates = { agentViewModel.checkForAgentUpdates() },
+                    onCheckAgentUpdates = { agentViewModel.checkAgentUpdates() },
                     onUpdateAgent = { agent -> agentViewModel.updateAgent(agent) },
                     onStartAntigravityLogin = { agentViewModel.startAntigravityLogin() },
                     onSubmitAntigravityCode = { agentViewModel.submitAntigravityCode(it) },
@@ -226,14 +233,15 @@ fun AgentWorkspaceScreen(
                 )
                 2 -> UbuntuSubsystemTab(
                     state = state,
-                    onInstallRuntime = { agentViewModel.startRuntimeInstall() },
+                    isRuntimeReady = isRuntimeReady,
+                    onInstallRuntime = { agentViewModel.startRuntimeSetup() },
                     onInstallStack = { stack -> agentViewModel.installDevStack(stack) },
                     onRemoveStack = { stack -> agentViewModel.removeDevStack(stack) }
                 )
                 3 -> ChangesTab(
-                    changes = state.activeChanges,
-                    onUndo = { agentViewModel.undoAllChanges() },
-                    onKeep = { agentViewModel.keepAllChanges() },
+                    changes = state.changes,
+                    onUndo = { agentViewModel.undoLastChanges() },
+                    onKeep = { agentViewModel.keepLastChanges() },
                     onUndoFile = { path -> agentViewModel.undoFileChange(path) },
                     onKeepFile = { path -> agentViewModel.keepFileChange(path) }
                 )
@@ -246,6 +254,7 @@ fun AgentWorkspaceScreen(
 fun AgentChatTab(
     state: AppUiState,
     listState: LazyListState,
+    isRuntimeReady: Boolean,
     onSend: (String) -> Unit,
     onStop: () -> Unit,
     onRunInTerminal: (String) -> Unit
@@ -257,7 +266,7 @@ fun AgentChatTab(
             .fillMaxSize()
             .imePadding()
     ) {
-        if (!state.runtimeInstalled) {
+        if (!isRuntimeReady) {
             Surface(
                 color = MaterialTheme.colorScheme.tertiaryContainer,
                 modifier = Modifier.fillMaxWidth()
@@ -279,7 +288,7 @@ fun AgentChatTab(
         }
 
         Box(Modifier.weight(1f)) {
-            if (state.projectMessages.isEmpty() && state.liveProcess.isEmpty()) {
+            if (state.messages.isEmpty() && state.liveProcess.isEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -331,12 +340,12 @@ fun AgentChatTab(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(state.projectMessages, key = { it.id }) { message ->
+                    items(state.messages, key = { it.id }) { message ->
                         MessageBubble(message, onRunInTerminal)
                     }
-                    if (state.liveProcess.isNotEmpty() || state.thinkingActive) {
+                    if (state.liveProcess.isNotEmpty() || state.liveThinking) {
                         item(key = "live-process") {
-                            LiveProcessCard(state.liveProcess, state.isRunning, state.thinkingActive)
+                            LiveProcessCard(state.liveProcess, state.isRunning, state.liveThinking)
                         }
                     }
                 }
@@ -463,6 +472,7 @@ fun LiveProcessCard(items: List<ActivityItem>, isRunning: Boolean, thinkingActiv
 @Composable
 fun UbuntuSubsystemTab(
     state: AppUiState,
+    isRuntimeReady: Boolean,
     onInstallRuntime: () -> Unit,
     onInstallStack: (DevStack) -> Unit,
     onRemoveStack: (DevStack) -> Unit
@@ -483,9 +493,9 @@ fun UbuntuSubsystemTab(
                     Column {
                         Text("Ubuntu 20.04 LTS (PRoot)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Text(
-                            text = if (state.runtimeInstalled) "Установлено и готово к работе" else "Требуется загрузка подсистемы",
+                            text = if (isRuntimeReady) "Установлено и готово к работе" else "Требуется загрузка подсистемы",
                             fontSize = 12.sp,
-                            color = if (state.runtimeInstalled) PocketGreen else MaterialTheme.colorScheme.error
+                            color = if (isRuntimeReady) PocketGreen else MaterialTheme.colorScheme.error
                         )
                     }
                 }
@@ -501,7 +511,7 @@ fun UbuntuSubsystemTab(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = PocketOrange)
                 ) {
-                    Text(if (state.runtimeInstalled) "Переустановить Ubuntu" else "Установить Ubuntu 20.04 LTS")
+                    Text(if (isRuntimeReady) "Переустановить Ubuntu" else "Установить Ubuntu 20.04 LTS")
                 }
             }
         }
@@ -515,7 +525,7 @@ fun UbuntuSubsystemTab(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(DevStack.entries) { stack ->
-                val installed = stack in state.installedStacks
+                val installed = stack in state.installedDevStacks
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.surface,
@@ -527,7 +537,7 @@ fun UbuntuSubsystemTab(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(stack.localizedLabel(), fontWeight = FontWeight.SemiBold)
+                            Text(stack.label, fontWeight = FontWeight.SemiBold)
                             Text(
                                 text = if (installed) "Установлен" else "Не установлен",
                                 fontSize = 11.sp,
