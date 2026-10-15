@@ -533,8 +533,10 @@
     <string name="media_loop">Loop</string>
     <string name="media_speed">Speed</string>
 
-    <string name="panel_build">Build</string>
+    <string name="panel_terminal">Terminal</string>
     <string name="panel_diagnostics">Diagnostics</string>
+    <string name="panel_build">Build</string>
+    <string name="panel_flutter">Flutter</string>
     <string name="panel_no_diagnostics">No issues</string>
     <string name="panel_no_build_logs">No build logs</string>
     <string name="panel_lsp_success">LSP Success</string>

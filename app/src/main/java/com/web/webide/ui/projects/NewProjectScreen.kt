@@ -76,9 +76,11 @@ import java.io.FileOutputStream
 import java.util.Locale
 import androidx.core.graphics.toColorInt
 import com.web.webide.R
+import compose.icons.SimpleIcons
+import compose.icons.simpleicons.*
 
 // --- 数据结构 ---
-enum class ProjectType { NORMAL, WEBAPP, WEBSITE, NODE, PYTHON, ANDROID }
+enum class ProjectType { NORMAL, WEBAPP, WEBSITE, FLUTTER, NODE, PYTHON, ANDROID }
 
 data class SigningConfig(
     val enabled: Boolean,
@@ -394,16 +396,17 @@ fun NewProjectScreen(navController: NavController) {
                 // 类型选择
                 Text(stringResource(R.string.new_project_type_title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     MinimalTypeCard(stringResource(R.string.new_project_type_web), Icons.Default.Html, selectedType == ProjectType.NORMAL, Modifier.weight(1f)) { selectedType = ProjectType.NORMAL }
                     MinimalTypeCard(stringResource(R.string.new_project_type_webapp), Icons.Default.Android, selectedType == ProjectType.WEBAPP, Modifier.weight(1f)) { selectedType = ProjectType.WEBAPP }
                     MinimalTypeCard(stringResource(R.string.new_project_type_wrapper), Icons.Default.Link, selectedType == ProjectType.WEBSITE, Modifier.weight(1f)) { selectedType = ProjectType.WEBSITE }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MinimalTypeCard("Flutter", SimpleIcons.Flutter, selectedType == ProjectType.FLUTTER, Modifier.weight(1f)) { selectedType = ProjectType.FLUTTER }
+                    MinimalTypeCard("Android", Icons.Default.Build, selectedType == ProjectType.ANDROID, Modifier.weight(1f)) { selectedType = ProjectType.ANDROID }
                     MinimalTypeCard("Node.js", Icons.Default.Code, selectedType == ProjectType.NODE, Modifier.weight(1f)) { selectedType = ProjectType.NODE }
                     MinimalTypeCard("Python", Icons.Default.Terminal, selectedType == ProjectType.PYTHON, Modifier.weight(1f)) { selectedType = ProjectType.PYTHON }
-                    MinimalTypeCard("Android", Icons.Default.Build, selectedType == ProjectType.ANDROID, Modifier.weight(1f)) { selectedType = ProjectType.ANDROID }
                 }
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -879,6 +882,7 @@ private fun createNewProject(
                 ProjectType.NORMAL -> createNormalStructure(projectDir, createIndexPhp)
                 ProjectType.WEBAPP -> createWebAppStructure(projectDir, finalJsonContent)
                 ProjectType.WEBSITE -> createWebsiteStructure(projectDir, url, finalJsonContent)
+                ProjectType.FLUTTER -> createFlutterStructure(projectDir, name)
                 ProjectType.NODE -> createNodeStructure(projectDir)
                 ProjectType.PYTHON -> createPythonStructure(projectDir)
                 ProjectType.ANDROID -> createAndroidStructure(projectDir, name)
@@ -896,6 +900,15 @@ private fun createNewProject(
             withContext(Dispatchers.Main) { onError(e.message ?: context.getString(R.string.new_project_unknown_error)) }
         }
     }
+}
+
+private fun createFlutterStructure(dir: File, name: String) {
+    val lib = File(dir, "lib").apply { mkdirs() }
+    val web = File(dir, "web").apply { mkdirs() }
+    safeWrite(File(lib, "main.dart"), ProjectTemplates.flutterMainDart)
+    safeWrite(File(dir, "pubspec.yaml"), ProjectTemplates.flutterPubspecYaml(name))
+    safeWrite(File(web, "index.html"), ProjectTemplates.flutterWebIndexHtml)
+    safeWrite(File(dir, "analysis_options.yaml"), ProjectTemplates.flutterAnalysisOptions)
 }
 
 private fun createNodeStructure(dir: File) {

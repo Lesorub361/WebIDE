@@ -69,6 +69,7 @@ object FileIcons {
     private val ColorLua = Color(0xFF000080) // Lua Blue
     private val ColorRuby = Color(0xFFCC342D) // Ruby Red
     private val ColorSwift = Color(0xFFF05138) // Swift Orange
+    private val ColorFlutter = Color(0xFF02569B) // Flutter Blue
 
     fun getFileIcon(name: String, isDirectory: Boolean, isExpanded: Boolean = false): Pair<ImageVector, Color> {
         if (isDirectory) {
@@ -86,6 +87,7 @@ object FileIcons {
         if (fileName == "androidmanifest.xml") return Icons.Filled.Android to ColorAndroid
         if (fileName == "build.gradle" || fileName == "build.gradle.kts" || fileName == "settings.gradle" || fileName == "settings.gradle.kts") return SimpleIcons.Gradle to Color(0xFF02303A)
         if (fileName == "package.json") return SimpleIcons.Json to Color(0xFF339933)
+        if (fileName == "pubspec.yaml" || fileName == "pubspec.lock" || fileName == "analysis_options.yaml") return SimpleIcons.Flutter to ColorFlutter
         if (fileName.startsWith(".git")) return SimpleIcons.Git to Color(0xFFF05032)
         if (fileName == "dockerfile") return SimpleIcons.Docker to Color(0xFF2496ED)
 

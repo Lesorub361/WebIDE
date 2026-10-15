@@ -533,13 +533,15 @@
     <string name="media_loop">Loop</string>
     <string name="media_speed">Speed</string>
 
-    <string name="panel_build">Build</string>
-    <string name="panel_diagnostics">Diagnostics</string>
-    <string name="panel_no_diagnostics">No issues</string>
-    <string name="panel_no_build_logs">No build logs</string>
-    <string name="panel_lsp_success">LSP Success</string>
-    <string name="panel_lsp_error">LSP Error</string>
-    <string name="panel_cursor_position">Ln %1$d, Col %2$d</string>
+    <string name="panel_terminal">Терминал</string>
+    <string name="panel_diagnostics">Проблемы</string>
+    <string name="panel_build">Сборка</string>
+    <string name="panel_flutter">Flutter</string>
+    <string name="panel_no_diagnostics">Нет проблем в коде</string>
+    <string name="panel_no_build_logs">Нет логов сборки</string>
+    <string name="panel_lsp_success">LSP подключен</string>
+    <string name="panel_lsp_error">Ошибка LSP</string>
+    <string name="panel_cursor_position">Стр %1$d, Кол %2$d</string>
 
     <string name="about_developer_role_localization">Localization</string>
     <string name="about_developer_desc_language">English Translation</string>

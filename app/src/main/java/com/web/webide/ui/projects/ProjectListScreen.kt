@@ -33,12 +33,17 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -49,18 +54,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.web.webide.R
 import com.web.webide.core.utils.WorkspaceManager
+import compose.icons.SimpleIcons
+import compose.icons.simpleicons.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -75,13 +85,71 @@ import com.web.webide.ui.components.GitHubCloneDialog
 private const val PREFS_NAME = "project_prefs"
 private const val KEY_PINNED_PROJECTS = "pinned_projects"
 private const val KEY_SORT_ORDER = "sort_order"
-private const val KEY_SEARCH_HISTORY = "search_history" // 新增：搜索记录Key
+private const val KEY_SEARCH_HISTORY = "search_history"
 
 // --- 数据模型 ---
+enum class ProjectTechType(
+    val displayName: String,
+    val badgeColor: Color,
+    val icon: ImageVector
+) {
+    ALL("Все", Color(0xFF607D8B), Icons.Default.AllInclusive),
+    FLUTTER("Flutter", Color(0xFF02569B), SimpleIcons.Flutter),
+    WEB("Web", Color(0xFFE34F26), SimpleIcons.Html5),
+    NODE("Node.js", Color(0xFF339933), SimpleIcons.Javascript),
+    PYTHON("Python", Color(0xFF3776AB), SimpleIcons.Python),
+    ANDROID("Android", Color(0xFF3DDC84), Icons.Default.Android),
+    OTHER("Проект", Color(0xFF78909C), Icons.Default.Folder)
+}
+
 data class ProjectItem(
     val name: String,
-    val lastModified: Long
+    val lastModified: Long,
+    val techType: ProjectTechType = ProjectTechType.OTHER,
+    val gitBranch: String? = null
 )
+
+fun detectProjectTech(dir: File): Pair<ProjectTechType, String?> {
+    var branch: String? = null
+    val gitHead = File(dir, ".git/HEAD")
+    if (gitHead.exists()) {
+        try {
+            val headContent = gitHead.readText().trim()
+            if (headContent.startsWith("ref: refs/heads/")) {
+                branch = headContent.removePrefix("ref: refs/heads/")
+            }
+        } catch (_: Exception) {}
+    }
+
+    val tech = when {
+        File(dir, "pubspec.yaml").exists() -> ProjectTechType.FLUTTER
+        File(dir, "build.gradle").exists() || File(dir, "build.gradle.kts").exists() -> ProjectTechType.ANDROID
+        File(dir, "package.json").exists() -> ProjectTechType.NODE
+        File(dir, "main.py").exists() || File(dir, "requirements.txt").exists() -> ProjectTechType.PYTHON
+        File(dir, "index.html").exists() || File(dir, "webapp.json").exists() -> ProjectTechType.WEB
+        else -> ProjectTechType.OTHER
+    }
+    return tech to branch
+}
+
+fun formatRelativeTime(millis: Long): String {
+    val diff = System.currentTimeMillis() - millis
+    val seconds = diff / 1000
+    val minutes = seconds / 60
+    val hours = minutes / 60
+    val days = hours / 24
+    return when {
+        diff < 0 || seconds < 60 -> "Только что"
+        minutes < 60 -> "$minutes мин назад"
+        hours < 24 -> "$hours ч назад"
+        days == 1L -> "Вчера"
+        days < 7 -> "$days дн назад"
+        else -> {
+            val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.getDefault())
+            sdf.format(java.util.Date(millis))
+        }
+    }
+}
 
 // --- 排序规则枚举 ---
 enum class SortOrder(@StringRes val displayNameRes: Int) {
@@ -108,6 +176,7 @@ fun ProjectListScreen(navController: NavController) {
     var projectList by remember { mutableStateOf<List<ProjectItem>>(emptyList()) }
     var pinnedProjects by remember { mutableStateOf<Set<String>>(emptySet()) }
     var currentSortOrder by remember { mutableStateOf(SortOrder.NAME_ASC) }
+    var selectedFilter by remember { mutableStateOf(ProjectTechType.ALL) }
 
     // --- 搜索相关状态 ---
     var isSearchActive by remember { mutableStateOf(false) } // 是否处于搜索模式
@@ -184,8 +253,14 @@ fun ProjectListScreen(navController: NavController) {
                     file.isDirectory && file.name != "logs"
                 } ?: emptyArray()
 
-                val items = rawFiles.map {
-                    ProjectItem(name = it.name, lastModified = it.lastModified())
+                val items = rawFiles.map { file ->
+                    val (tech, branch) = detectProjectTech(file)
+                    ProjectItem(
+                        name = file.name,
+                        lastModified = file.lastModified(),
+                        techType = tech,
+                        gitBranch = branch
+                    )
                 }
 
                 // 先排序
@@ -271,11 +346,16 @@ fun ProjectListScreen(navController: NavController) {
 
     // --- 计算当前显示的列表 ---
     // 如果在搜索模式且有输入，过滤列表；否则显示完整排序列表
-    val displayList = remember(projectList, isSearchActive, searchQuery) {
-        if (isSearchActive && searchQuery.isNotEmpty()) {
-            projectList.filter { it.name.contains(searchQuery, ignoreCase = true) }
-        } else {
+    val displayList = remember(projectList, isSearchActive, searchQuery, selectedFilter) {
+        val filteredByTech = if (selectedFilter == ProjectTechType.ALL) {
             projectList
+        } else {
+            projectList.filter { it.techType == selectedFilter }
+        }
+        if (isSearchActive && searchQuery.isNotEmpty()) {
+            filteredByTech.filter { it.name.contains(searchQuery, ignoreCase = true) }
+        } else {
+            filteredByTech
         }
     }
 
@@ -495,45 +575,82 @@ fun ProjectListScreen(navController: NavController) {
             }
             // --- 场景 2：显示项目列表 (常规 或 搜索过滤中) ---
             else {
-                if (displayList.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = if (isSearchActive) stringResource(R.string.projects_no_matching) else stringResource(R.string.projects_empty),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        state = listState,
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            top = 16.dp,
-                            end = 16.dp,
-                            bottom = if (isSearchActive) 16.dp else 100.dp // 搜索时不需要底部留白给 FAB
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Filter Chips Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(displayList, key = { it.name }) { item ->
-                            ProjectCard(
-                                modifier = Modifier.animateItem(
-                                    placementSpec = spring(
-                                        dampingRatio = Spring.DampingRatioLowBouncy,
-                                        stiffness = Spring.StiffnessLow
-                                    )
-                                ),
-                                folderName = item.name,
-                                isPinned = pinnedProjects.contains(item.name),
-                                onClick = {
-                                    // 点击项目时，如果需要保存此次搜索记录，可以在这里调用 saveSearchHistory(searchQuery)
-                                    navController.safeNavigate("code_edit/${item.name}")
-                                },
-                                onTogglePin = { togglePin(item.name) },
-                                onDelete = {
-                                    projectToDelete = item.name
-                                    showDeleteDialog = true
-                                }
+                        ProjectTechType.entries.forEach { tech ->
+                            val isSelected = selectedFilter == tech
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { selectedFilter = tech },
+                                label = { Text(tech.displayName) },
+                                leadingIcon = if (tech != ProjectTechType.ALL) {
+                                    {
+                                        Icon(
+                                            imageVector = tech.icon,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else tech.badgeColor
+                                        )
+                                    }
+                                } else null
                             )
+                        }
+                    }
+
+                    if (displayList.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (isSearchActive) stringResource(R.string.projects_no_matching) else stringResource(R.string.projects_empty),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            state = listState,
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                top = 4.dp,
+                                end = 16.dp,
+                                bottom = if (isSearchActive) 16.dp else 100.dp // 搜索时不需要底部留白给 FAB
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(displayList, key = { it.name }) { item ->
+                                ProjectCard(
+                                    modifier = Modifier.animateItem(
+                                        placementSpec = spring(
+                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                            stiffness = Spring.StiffnessLow
+                                        )
+                                    ),
+                                    item = item,
+                                    isPinned = pinnedProjects.contains(item.name),
+                                    onClick = {
+                                        // 点击项目时，如果需要保存此次搜索记录，可以在这里调用 saveSearchHistory(searchQuery)
+                                        navController.safeNavigate("code_edit/${item.name}")
+                                    },
+                                    onTogglePin = { togglePin(item.name) },
+                                    onDelete = {
+                                        projectToDelete = item.name
+                                        showDeleteDialog = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -568,11 +685,10 @@ fun ProjectListScreen(navController: NavController) {
     }
 }
 
-// ... (ProjectCard 组件代码与上一次回复完全相同，无需更改) ...
 @Composable
 fun ProjectCard(
     modifier: Modifier = Modifier,
-    folderName: String,
+    item: ProjectItem,
     isPinned: Boolean,
     onClick: () -> Unit,
     onTogglePin: () -> Unit,
@@ -587,78 +703,151 @@ fun ProjectCard(
 
     Card(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(85.dp)
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        ),
+        border = BorderStroke(
+            1.dp,
+            if (isPinned) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+        )
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Row(
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // App / Tech Icon Container
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(item.techType.badgeColor.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Folder,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
+                    imageVector = item.techType.icon,
+                    contentDescription = item.techType.displayName,
+                    tint = item.techType.badgeColor,
+                    modifier = Modifier.size(26.dp)
                 )
+            }
 
-                Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     Text(
-                        text = folderName,
-                        style = MaterialTheme.typography.titleMedium,
+                        text = item.name,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
+
+                    if (isPinned) {
+                        Icon(
+                            imageVector = Icons.Default.PushPin,
+                            contentDescription = pinnedDescription,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(14.dp)
+                                .rotate(45f)
+                        )
+                    }
                 }
 
-                Box {
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Default.MoreVert, moreOptionsDescription)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Tech Badge Pill
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = item.techType.badgeColor.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = item.techType.displayName,
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                            color = item.techType.badgeColor,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
                     }
 
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(if (isPinned) unpinText else pinText) },
-                            leadingIcon = {
-                                Icon(if (isPinned) Icons.Default.PushPin else Icons.Default.VerticalAlignTop, null)
-                            },
-                            onClick = {
-                                menuExpanded = false
-                                onTogglePin()
-                            }
-                        )
-                        HorizontalDivider()
-                        DropdownMenuItem(
-                            text = { Text(deleteTitleText, color = MaterialTheme.colorScheme.error) },
-                            leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
-                            onClick = {
-                                menuExpanded = false
-                                onDelete()
-                            }
-                        )
+                    // Git branch if available
+                    if (!item.gitBranch.isNullOrBlank()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Icon(
+                                imageVector = SimpleIcons.Git,
+                                contentDescription = null,
+                                tint = Color(0xFFF05032),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Text(
+                                text = item.gitBranch,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
+
+                    // Relative time
+                    Text(
+                        text = "•  ${formatRelativeTime(item.lastModified)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    )
                 }
             }
 
-            if (isPinned) {
-                Icon(
-                    imageVector = Icons.Default.PushPin,
-                    contentDescription = pinnedDescription,
-                    tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f),
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 5.dp, end = 5.dp)
-                        .size(16.dp)
-                        .rotate(45f)
-                )
+            // Dropdown menu
+            Box {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = moreOptionsDescription,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(if (isPinned) unpinText else pinText) },
+                        leadingIcon = {
+                            Icon(if (isPinned) Icons.Default.PushPin else Icons.Default.VerticalAlignTop, null)
+                        },
+                        onClick = {
+                            menuExpanded = false
+                            onTogglePin()
+                        }
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text(deleteTitleText, color = MaterialTheme.colorScheme.error) },
+                        leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+                        onClick = {
+                            menuExpanded = false
+                            onDelete()
+                        }
+                    )
+                }
             }
         }
     }

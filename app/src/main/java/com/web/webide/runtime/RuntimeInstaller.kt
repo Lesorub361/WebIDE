@@ -747,6 +747,7 @@ class RuntimeInstaller(private val context: Context) {
                 removePath(File(rootfs, "root/.cache/composer"))
                 removePath(File(rootfs, "root/.composer"))
             }
+            DevStack.FLUTTER -> removeFlutterStack()
         }
 
         writeDevStackState(readDevStackState().apply { put(stack.name, false) })
@@ -792,6 +793,18 @@ class RuntimeInstaller(private val context: Context) {
             "usr/local/bin/keytool",
         ).forEach { removePath(File(rootfs, it)) }
         removeAndroidGradleProperty()
+    }
+
+    private fun removeFlutterStack() {
+        listOf(
+            "opt/flutter",
+            "etc/profile.d/flutter.sh",
+            "usr/local/bin/flutter",
+            "usr/local/bin/dart",
+            "root/.flutter",
+            "root/.dart-tool",
+            "root/.pub-cache",
+        ).forEach { removePath(File(rootfs, it)) }
     }
 
     private fun removeAndroidGradleProperty() {
@@ -868,6 +881,10 @@ class RuntimeInstaller(private val context: Context) {
                 installComposer(proot, from, onProgress)
                 verifyGuest(proot, "php --version && composer --version", str(R.string.rt_install_verify_failed, "PHP"))
             }
+            DevStack.FLUTTER -> {
+                installFlutterToolchain(proot, from, to, onProgress)
+                verifyGuest(proot, "flutter --version && dart --version", str(R.string.rt_install_verify_failed, "Flutter"))
+            }
         }
         if (!verified) return
         writeDevStackState(readDevStackState().apply { put(stack.name, true) })
@@ -907,6 +924,56 @@ class RuntimeInstaller(private val context: Context) {
         staged.delete()
         Os.chmod(composer.absolutePath, 0b111101101)
         onProgress(RuntimeInstallProgress(str(R.string.rt_install_installing_named, "Composer"), fraction))
+    }
+
+    private suspend fun installFlutterToolchain(
+        proot: File,
+        from: Float,
+        to: Float,
+        onProgress: suspend (RuntimeInstallProgress) -> Unit,
+    ) {
+        aptInstall(
+            proot,
+            listOf("git", "curl", "unzip", "xz-utils", "zip", "libglu1-mesa"),
+            str(R.string.rt_install_flutter),
+            from,
+            onProgress,
+        )
+        val flutterDir = File(rootfs, "opt/flutter")
+        if (!File(flutterDir, "bin/flutter").isFile) {
+            onProgress(RuntimeInstallProgress(str(R.string.rt_install_flutter), from + (to - from) * 0.4f))
+            runGuestCommand(
+                proot = proot,
+                command = "git clone --depth 1 -b stable https://github.com/flutter/flutter.git /opt/flutter",
+                displayCommand = "git clone --depth 1 -b stable https://github.com/flutter/flutter.git /opt/flutter",
+                fraction = from + (to - from) * 0.6f,
+                timeoutMs = 30 * 60 * 1_000L,
+                onProgress = onProgress,
+                failureMessage = str(R.string.rt_install_could_not_install, "Flutter SDK"),
+            )
+        }
+        runGuestCommand(
+            proot = proot,
+            command = "git config --global --add safe.directory /opt/flutter",
+            displayCommand = "git config --global --add safe.directory /opt/flutter",
+            fraction = from + (to - from) * 0.8f,
+            timeoutMs = 60 * 1_000L,
+            onProgress = onProgress,
+            failureMessage = "Could not configure git safe directory",
+        )
+        val profileScript = File(rootfs, "etc/profile.d/flutter.sh")
+        profileScript.parentFile?.mkdirs()
+        profileScript.writeText("export PATH=\"/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:\$PATH\"\n")
+        profileScript.setExecutable(true, false)
+
+        val localBin = File(rootfs, "usr/local/bin").apply { mkdirs() }
+        listOf("flutter", "dart").forEach { cmd ->
+            val link = File(localBin, cmd)
+            if (link.exists() || java.nio.file.Files.isSymbolicLink(link.toPath())) link.delete()
+            try {
+                Os.symlink("../../../opt/flutter/bin/$cmd", link.absolutePath)
+            } catch (_: Exception) {}
+        }
     }
 
     private suspend fun installAndroidToolchain(

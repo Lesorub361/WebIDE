@@ -550,8 +550,10 @@
     <string name="media_loop">循环</string>
     <string name="media_speed">速度</string>
 
-    <string name="panel_build">构建</string>
+    <string name="panel_terminal">终端</string>
     <string name="panel_diagnostics">问题</string>
+    <string name="panel_build">构建</string>
+    <string name="panel_flutter">Flutter</string>
     <string name="panel_no_diagnostics">暂无问题</string>
     <string name="panel_no_build_logs">暂无构建日志</string>
     <string name="panel_lsp_success">LSP 成功</string>

@@ -280,6 +280,11 @@ enum class DevStack(
         "Websites and apps with PHP — classic sites and Laravel projects.",
         "php-cli, common extensions, and Composer",
     ),
+    FLUTTER(
+        "Flutter (Dart SDK)",
+        "Build cross-platform Flutter apps for Web, Android, and desktop.",
+        "Flutter SDK, Dart compiler, Git, and build tools",
+    ),
 }
 
 data class ToolRequest(

@@ -55,6 +55,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.web.webide.files.FileTreeConfig
 import com.web.webide.files.SortBy
+import com.web.webide.files.FileIcons
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -714,8 +715,8 @@ fun CodeEditScreen(folderName: String, navController: NavController, viewModel: 
                         EditorPanelLayout(
                             viewModel = viewModel,
                             symbols = currentSymbols,
-                            modifier = Modifier.height(availableEditorHeight) // 将精确高度传递给 EditorPanelLayout
-                            // 将精确高度传递给 EditorPanelLayout
+                            projectPath = projectPath,
+                            modifier = Modifier.height(availableEditorHeight)
                         ) {
                             Column(modifier = Modifier.fillMaxSize()) {
                                 AnimatedVisibility(visible = showInitialLoader || isBuilding) {
@@ -1021,27 +1022,68 @@ fun EditCode(
                 ) {
                     openFiles.forEachIndexed { index, tab ->
                         Box {
-                            // 1. 获取标题
-                            val displayName = tab.title
-
-                            // 2. 区分颜色 (Diff 模式显示不同颜色)
+                            val isSelected = pagerState.currentPage == index
                             val isDiff = tab is com.web.webide.ui.editor.viewmodel.DiffEditorState
-                            val tabColor =
-                                if (isDiff) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface
+                            val isModified = (tab as? com.web.webide.ui.editor.viewmodel.CodeEditorState)?.isModified ?: false
+                            val cleanTitle = if (tab.title.startsWith("*")) tab.title.removePrefix("*") else tab.title
+                            val (fileIcon, iconTint) = FileIcons.getFileIcon(tab.file.name, tab.file.isDirectory)
+                            val tabColor = if (isDiff) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface
 
                             Tab(
-                                selected = pagerState.currentPage == index,
+                                selected = isSelected,
                                 onClick = {
                                     if (pagerState.currentPage == index) expandedTabIndex = index
                                     else scope.launch { pagerState.animateScrollToPage(index) }
                                 },
                                 text = {
-                                    Text(
-                                        text = displayName,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        color = if (pagerState.currentPage == index) MaterialTheme.colorScheme.primary else tabColor
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 2.dp, vertical = 2.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = fileIcon,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = if (iconTint == Color.Unspecified) {
+                                                if (isSelected) MaterialTheme.colorScheme.primary else LocalContentColor.current.copy(alpha = 0.7f)
+                                            } else iconTint
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text(
+                                            text = cleanTitle,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else tabColor
+                                        )
+
+                                        if (isModified) {
+                                            Spacer(Modifier.width(6.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(7.dp)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.primary)
+                                            )
+                                        }
+
+                                        Spacer(Modifier.width(6.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .size(18.dp)
+                                                .clip(CircleShape)
+                                                .clickable { viewModel.closeFile(index) },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = closeText,
+                                                modifier = Modifier.size(12.dp),
+                                                tint = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
                                 }
                             )
 
@@ -1595,77 +1637,104 @@ fun FileManagerDrawer(
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Toolbar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
         ) {
-            Text(
-                fileTreeTitleText,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-
             Row(
-                modifier = Modifier.padding(end = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // New File/Folder
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = newItemContentDescription,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable { showCreateMenu = true }
-                        .padding(4.dp)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.FolderOpen,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = currentFolderName.uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
-                // Locate File
-                Icon(
-                    imageVector = Icons.Filled.MyLocation,
-                    contentDescription = locateFileContentDescription,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable { locateTrigger = System.currentTimeMillis() }
-                        .padding(4.dp)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    // New File/Folder
+                    IconButton(
+                        onClick = { showCreateMenu = true },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = newItemContentDescription,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
 
-                // Collapse All
-                Icon(
-                    imageVector = Icons.Filled.UnfoldLess,
-                    contentDescription = collapseAllContentDescription,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable { collapseTrigger = System.currentTimeMillis() }
-                        .padding(4.dp)
-                )
+                    // Refresh
+                    IconButton(
+                        onClick = { refreshTrigger = System.currentTimeMillis() },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
 
-                // Expand All
-                Icon(
-                    imageVector = Icons.Filled.UnfoldMore,
-                    contentDescription = expandAllContentDescription,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable { expandTrigger = System.currentTimeMillis() }
-                        .padding(4.dp)
-                )
+                    // Locate File
+                    IconButton(
+                        onClick = { locateTrigger = System.currentTimeMillis() },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.MyLocation,
+                            contentDescription = locateFileContentDescription,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
 
-                // Settings
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = optionsContentDescription,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .clickable { showSettingsMenu = true }
-                        .padding(4.dp)
-                )
+                    // Collapse All
+                    IconButton(
+                        onClick = { collapseTrigger = System.currentTimeMillis() },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.UnfoldLess,
+                            contentDescription = collapseAllContentDescription,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    // Settings
+                    IconButton(
+                        onClick = { showSettingsMenu = true },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = optionsContentDescription,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+                }
             }
         }
 

@@ -27,6 +27,7 @@
     <string name="rt_install_python_verify_failed">Проверка Python не пройдена (повтор при следующем запуске): %1$s</string>
     <string name="rt_install_cpp">Установка компиляторов C/C++ и инструментов сборки</string>
     <string name="rt_install_php">Установка PHP и распространённых расширений</string>
+    <string name="rt_install_flutter">Установка Flutter SDK и компилятора Dart</string>
     <string name="rt_install_stack_installed">%1$s установлен</string>
     <string name="rt_install_android_tools">Установка инструментов разработки Android</string>
     <string name="rt_install_bundle_tools_installed">Инструменты %1$s установлены</string>

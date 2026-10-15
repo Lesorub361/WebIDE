@@ -27,6 +27,7 @@
     <string name="rt_install_python_verify_failed">Python verification failed (will retry on next launch): %1$s</string>
     <string name="rt_install_cpp">Installing C/C++ compilers and build tools</string>
     <string name="rt_install_php">Installing PHP and common extensions</string>
+    <string name="rt_install_flutter">Installing Flutter SDK and Dart toolchain</string>
     <string name="rt_install_stack_installed">%1$s installed</string>
     <string name="rt_install_android_tools">Installing the Android development tools</string>
     <string name="rt_install_bundle_tools_installed">%1$s tools installed</string>

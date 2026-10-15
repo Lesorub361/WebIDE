@@ -525,7 +525,7 @@ private fun FileTreeImpl(
     }
     if (showCreateFileDialog) {
         var name by remember { mutableStateOf("") }
-        val extensions = remember { listOf(".html", ".css", ".js", ".php", ".json", ".xml", ".kt", ".java", ".txt", ".md") }
+        val extensions = remember { listOf(".dart", ".yaml", ".kt", ".js", ".ts", ".html", ".css", ".json", ".py", ".md", ".txt") }
         
         AlertDialog(
             onDismissRequest = { showCreateFileDialog = false },
@@ -755,7 +755,7 @@ private fun FileNodeItem(
         modifier = Modifier
             .then(widthModifier)
             .clip(RoundedCornerShape(8.dp))
-            .background(if (isSelected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
+            .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
             .combinedClickable(
                 onClick = {
                     if (effectiveNode.isDirectory) {
@@ -769,13 +769,25 @@ private fun FileNodeItem(
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth() // Row 填满外层 Column
+                .fillMaxWidth()
                 .onSizeChanged { onWidthMeasured(effectiveNode.file.path, it.width) }
-                .padding(vertical = 10.dp, horizontal = 4.dp), // 内部上下边距，稍微减小一点显得更紧凑
+                .padding(vertical = 6.dp, horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(18.dp)
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp))
+                )
+                Spacer(modifier = Modifier.width(3.dp))
+            } else {
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+
             if (depth > 0) {
-                Spacer(modifier = Modifier.width((depth * 20).dp))
+                Spacer(modifier = Modifier.width((depth * 18).dp))
             }
 
             val (icon, baseTint) = FileIcons.getFileIcon(effectiveNode.file.name, effectiveNode.isDirectory, isExpanded)
@@ -789,24 +801,25 @@ private fun FileNodeItem(
             if (effectiveNode.isDirectory) {
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
-
                     contentDescription = stringResource(R.string.content_desc_expand),
-                    modifier = Modifier.size(24.dp).rotate(arrowRotation),
+                    modifier = Modifier.size(20.dp).rotate(arrowRotation),
                     tint = LocalContentColor.current.copy(alpha = 0.6f)
                 )
+                Spacer(modifier = Modifier.width(4.dp))
             } else {
                 Spacer(modifier = Modifier.width(24.dp))
             }
 
-            Icon(icon, null, Modifier.size(20.dp), tint = tint)
+            Icon(icon, null, Modifier.size(18.dp), tint = tint)
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
                 text = effectiveName,
                 maxLines = 1,
                 overflow = TextOverflow.Visible,
-                fontSize = 14.sp,
-                color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else Color.Unspecified
+                fontSize = 13.5.sp,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Unspecified
             )
 
             // File Details (if enabled)
